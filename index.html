@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leitor de QR Code</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h2 { color: #176b43; }
+    #reader {
+      max-width: 450px;
+      margin: 20px auto;
+    }
+    #status { font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Leitor de QR Code</h2>
+  <p>Aponte a câmera para o QR Code do produto.</p>
+  <div id="reader"></div>
+  <p id="status">Aguardando leitura...</p>
+
+  <script>
+    const status = document.getElementById("status");
+
+    if (!window.opener) {
+      status.textContent =
+        "Abra este leitor pelo botão da página de retiradas.";
+    } else {
+      const scanner = new Html5Qrcode("reader");
+
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (codigo) => {
+          status.textContent = "QR Code lido! Enviando...";
+
+          try {
+            await scanner.stop();
+
+            window.opener.postMessage({
+              type: "QR_LIDO",
+              codigo: codigo.trim()
+            }, "*");
+
+            status.textContent =
+              "Código enviado! Volte à página de retiradas.";
+          } catch (erro) {
+            status.textContent =
+              "Não foi possível enviar o código.";
+          }
+        }
+      ).catch((erro) => {
+        status.textContent =
+          "Erro ao abrir câmera: " + erro;
+      });
+    }
+  </script>
+</body>
+</html>
